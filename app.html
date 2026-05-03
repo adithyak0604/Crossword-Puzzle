@@ -465,31 +465,54 @@
       const grid = placeWords(words);
       renderGrid(grid); listWords(words);
       const state = { found: new Set() };
+      let revealInProgress = false;
+      let revealUsed = false;
       updateProgress(0, words.length);
       startTimer(); // Start the timer when game begins
       document.getElementById('grid').onclick = (e)=> handleCellClick(e, grid, words, state);
       document.getElementById('reset-btn').onclick = resetSelection;
       document.getElementById('reveal-btn').onclick = ()=>{
-        for (const w of words) if (!state.found.has(w)) { 
-          state.found.add(w); 
-          document.querySelector(`#words li[data-word='${w}']`)?.classList.add('found');
-          // mark cells for revealed word
-          const wordCells = findWordCells(grid, w);
-          if (wordCells) {
-            wordCells.forEach(([rr,cc]) => {
-              const cell = document.querySelector(`.cell[data-r='${rr}'][data-c='${cc}']`);
-              if (cell) cell.classList.add('found');
-            });
+        if (revealInProgress || revealUsed) return; // Prevent multiple simultaneous reveals
+        
+        revealInProgress = true;
+        revealUsed = true;
+        const revealBtn = document.getElementById('reveal-btn');
+        const originalText = revealBtn.textContent;
+        revealBtn.disabled = true;
+        revealBtn.textContent = '⏳ Revealing...';
+        revealBtn.style.opacity = '0.5';
+
+        // Find and reveal one word
+        for (const w of words) {
+          if (!state.found.has(w)) { 
+            state.found.add(w); 
+            document.querySelector(`#words li[data-word='${w}']`)?.classList.add('found');
+            
+            const wordCells = findWordCells(grid, w);
+            if (wordCells) {
+              wordCells.forEach(([rr,cc]) => {
+                const cell = document.querySelector(`.cell[data-r='${rr}'][data-c='${cc}']`);
+                if (cell) cell.classList.add('found');
+              });
+            }
+            updateProgress(state.found.size, words.length);
+            break; 
           }
-          updateProgress(state.found.size, words.length);
-          // Check if puzzle is complete
+        }
+
+        // Restore button after a brief delay
+        setTimeout(() => {
+          revealInProgress = false;
+          revealBtn.textContent = '✅ Used';
+          revealBtn.style.opacity = '0.5';
+
+          // Check for win
           if (state.found.size === words.length) {
             stopTimer();
             const finalTime = formatTime(elapsedTime);
-            setTimeout(() => alert(`🎉 Congratulations! You found all words!\n\n⏱️ Time: ${finalTime}`), 300);
+            alert(`🎉 Congratulations! You found all words!\n\n⏱️ Time: ${finalTime}`);
           }
-          break; 
-        }
+        }, 300);
       };
       // click words to highlight
       document.getElementById('words').onclick = (e)=>{
