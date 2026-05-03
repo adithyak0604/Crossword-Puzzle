@@ -2,7 +2,6 @@
 
 A fast, responsive word search game built with vanilla JavaScript, HTML5, and Tailwind CSS. Find hidden words in an interactive 12×12 grid. No setup required—just open and play!
 
-**[Play Now](#quick-start)** • **[How It Works](#how-to-play)**
 
 ---
 
